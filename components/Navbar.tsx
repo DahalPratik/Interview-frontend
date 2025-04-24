@@ -1,24 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const router = useRouter();
+  const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   // Check if we're on an auth page
   const isAuthPage = pathname?.startsWith("/auth/") || false;
 
-  // For demo purposes, we'll simulate login status based on URL
-  // In a real app, you'd use a context or state management
-  if (pathname === "/dashboard" && !isLoggedIn) {
-    setIsLoggedIn(true);
-  } else if (pathname === "/auth/login" && isLoggedIn) {
-    setIsLoggedIn(false);
-  }
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
   return (
     <nav className="bg-white shadow-md">
@@ -41,7 +40,7 @@ export default function Navbar() {
               Home
             </Link>
 
-            {isLoggedIn ? (
+            {isAuthenticated && user ? (
               <>
                 <Link
                   href="/dashboard"
@@ -53,12 +52,32 @@ export default function Navbar() {
                 >
                   Dashboard
                 </Link>
-                <button
-                  onClick={() => setIsLoggedIn(false)}
-                  className="bg-gray-200 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-300"
-                >
-                  Logout
-                </button>
+                
+                {/* User profile section */}
+                <div className="relative group ml-2">
+                  <button className="flex items-center space-x-2 focus:outline-none">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm">
+                      {user.name[0]}
+                    </div>
+                    <span className="text-gray-700">{user.name}</span>
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Dropdown menu */}
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block z-10">
+                    <div className="px-4 py-2 border-b">
+                      <p className="text-sm">{user.email}</p>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
               </>
             ) : (
               !isAuthPage && (
@@ -127,8 +146,20 @@ export default function Navbar() {
               Home
             </Link>
 
-            {isLoggedIn ? (
+            {isAuthenticated && user ? (
               <>
+                <div className="px-4 py-2 border-b border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm">
+                      {user.name[0]}
+                    </div>
+                    <div>
+                      <p className="font-medium">{user.name}</p>
+                      <p className="text-sm text-gray-500">{user.email}</p>
+                    </div>
+                  </div>
+                </div>
+                
                 <Link
                   href="/dashboard"
                   className={`block px-4 py-2 rounded-md ${
@@ -140,9 +171,10 @@ export default function Navbar() {
                 >
                   Dashboard
                 </Link>
+                
                 <button
                   onClick={() => {
-                    setIsLoggedIn(false);
+                    handleLogout();
                     setMobileMenuOpen(false);
                   }}
                   className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
